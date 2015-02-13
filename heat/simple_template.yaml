@@ -1,0 +1,37 @@
+heat_template_version: 2013-05-23
+
+description: >
+    A Simple HOT template to orchestrate Networks and Servers
+
+parameters:
+    FlavorID:
+      type: string
+      description: flavor type for the instance to be created
+    ImageID:
+      type: string
+      description: Id or name of the image to use for the instance
+    VMName:
+      type: string
+      description: Name of VM
+resources:
+    OAM_Network:
+      type: OS::Neutron::Net
+      properties:
+        admin_state_up: true
+        name: OAM-Network
+    OAM_SubNet:
+      type: OS::Neutron::Subnet
+      properties:
+        name: OAM-SubNet
+        cidr: 10.10.10.0/24
+        enable_dhcp: true
+        gateway_ip: 10.10.10.1
+        network_id: {get_resource: OAM_Network}
+    server1:
+      type: OS::Nova::Server
+      properties:
+        name: {get_param: VMName}
+        image: {get_param: ImageID}
+        flavor: {get_param: FlavorID}
+        networks:
+        - network: {get_resource: OAM_Network}

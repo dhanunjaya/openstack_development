@@ -1,0 +1,57 @@
+heat_template_version: 2013-05-23
+
+description: >
+    A Simple HOT template to orchestrate Trinity Networks and Servers
+
+parameters:
+    flavor:
+      type: string
+      description: flavor type for the instance to be created
+      default: m1.medium
+    image:
+      type: string
+      default: Fedora
+      description: Id or name of the image to use for the instance
+    NSD_Network_ID:
+      type: string
+      description: physical NSD network Id
+resources:
+    OAM_Network:
+      type: OS::Neutron::Net
+      properties:
+        admin_state_up: true
+        name: OAM-Network
+    OAM_SubNet:
+      type: OS::Neutron::Subnet
+      properties:
+        name: OAM-SubNet
+        cidr: 10.10.10.0/24
+        enable_dhcp: true
+        gateway_ip: 10.10.10.1
+        network_id: {get_resource: OAM_Network}
+    OAM_Router:
+      type: OS::Neutron::Router
+      properties:
+        external_gateway_info:
+          network: {get_param: NSD_Network_ID}
+    OAM_Router_Interface:
+      type: OS::Neutron::RouterInterface
+      properties:
+        router_id: {get_resource: OAM_Router}
+        subnet_id: {get_resource: OAM_SubNet}
+    OAM_Port1:
+      type: OS::Neutron::Port
+      properties:
+        network_id: {get_resource: OAM_Network}
+        fixed_ips: ["subnet_id": {get_resource: OAM_SubNet}]
+    E_N_SBG_Server:
+      type: OS::Nova::Server
+      properties:
+        name: E-N-SBG
+        image: {get_param: image}
+        flavor: {get_param: flavor}
+        networks: ["port": {get_resource: OAM_Port1}]
+outputs:
+    E_N_SBG_Server_privateIP:
+      description: IP address of N-SBG Server
+      value: {get_attr: [E_N_SBG_Server, first_address]}
