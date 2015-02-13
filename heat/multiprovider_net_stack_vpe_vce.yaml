@@ -1,0 +1,46 @@
+heat_template_version: 2013-05-23
+
+description: >
+  HOT template to create IPAG and VPE networks
+
+parameters:
+  network_name:
+    type: string
+    description: Name of the ipag multiprovider network
+  network_type:
+    type: string
+    description: Provider network type (VLAN|Flat) MultiProviderNet is supported for VLANs only
+  physical_network:
+    type: string
+    description: Name of the physical network
+  vlan_segments:
+    type: comma_delimited_list
+    description: Comma separated list of segmentation_ids
+
+resources:
+  network_create:
+    type: OS::Neutron::MultiProviderNet
+    properties:
+      name: { get_param: network_name }
+      network_type: { get_param: network_type }
+      physical_network: { get_param: physical_network }
+      segments: { get_param: vlan_segments }
+
+
+  subnet_create:
+    type: OS::Neutron::Subnet
+    properties:
+      name: subnet-dvspg-vce
+      cidr: 10.10.10.0/24
+      dns_nameservers: [172.16.1.11, 172.16.1.6]
+      enable_dhcp: true
+      gateway_ip: 10.10.10.254
+      network_id: { get_resource: network_create }
+
+outputs:
+  multiprovider_net_show:
+    description: Name Of MultiProviderNet Created
+    value: { get_attr: [ network_name, show ] }
+  multiprovider_net_subnets_show:
+    description: valn segments
+    value: { get_attr: [ vlan_segments, segments ] }

@@ -1,0 +1,40 @@
+heat_template_version: 2013-05-23
+
+description: Test Template
+
+parameters:
+  ImageID:
+    type: string
+    description: Image use to boot a server
+  NetID1:
+    type: string
+    description: OAM network
+  NetID2:
+    type: string
+    description: IPAG network
+  NetID3:
+    type: string
+    description: vPE network
+  FlavorID:
+    type: string
+    description: flavor type
+  VMName:
+    type: string
+    description: name of VM
+
+resources:
+  create_vCE:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: VMName }
+      image: { get_param: ImageID }
+      flavor: { get_param: FlavorID }
+      networks:
+      - network: { get_param: NetID1 }
+      - network: { get_param: NetID2 }
+      - network: { get_param: NetID3 }
+
+outputs:
+  server1_private_ip:
+    description: IP address of the server in the private network
+    value: { get_attr: [ server1, first_address ] }
